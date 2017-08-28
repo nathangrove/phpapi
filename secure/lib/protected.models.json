@@ -1,0 +1,12 @@
+{
+  "user": {
+    "show": false,
+    "permissions": ""
+  },
+  "event": {
+    "permissions": "rw",
+    "fields": {
+      "id": ""
+    }
+  }
+}
