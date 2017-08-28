@@ -38,6 +38,7 @@ CREATE TABLE `event` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `title` varchar(255) DEFAULT NULL,
   `description` text,
+  `user` int(11),
   `end_date` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `start_date` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)

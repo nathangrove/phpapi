@@ -54,6 +54,7 @@ class API {
     # check the header for auth token...
     $headers = getallheaders();
     if (isset($headers['authorization'])) $this->authorization = $headers['authorization'];
+    if (isset($headers['Authorization'])) $this->authorization = $headers['Authorization'];
 
   }
   ################################
@@ -75,7 +76,7 @@ class API {
     $this->intercept();
 
     # find our route they are accessing 
-    foreach ($this->routes as $route => $controller){
+    foreach ($this->routes as $route => $module){
 
       # check for a match
       $route_check = preg_replace('/:[a-zA-Z0-9_]*/','[a-zA-Z0-9_]*',$route);
@@ -114,16 +115,16 @@ class API {
         $request->queryParams = new stdClass();
         foreach ($_REQUEST as $key => $val) $rquest->queryParams->$key = $val;
 
-        # include the controller...
-        include $controller;
+        # include the module...
+        include $this->config->calldir."/$module";
 
-        $processor = new api_module();
+        $processor = new api_module($this->config);
 
         # can we call it?
         @$call = $pathvars['call'] . "_" . strtolower($_SERVER['REQUEST_METHOD']);
         if (!is_callable(array($processor,$call))){
           http_response_code(404);
-          print "Controller method not found";
+          print "module method not found";
           exit;
         }
 
@@ -149,7 +150,7 @@ class API {
     # is the auto route option set?
     if ($this->config->auto_route){
 
-      # let's assume the first var is the directory that contains the controller and the second will be an "id" variable...
+      # let's assume the first var is the directory that contains the module and the second will be an "id" variable...
       $route = explode("/",$this->path);
       $dir = $this->config->app_dir."/calls/".$route[0];
       $id = $route[1];
@@ -161,13 +162,13 @@ class API {
       $request->queryParams = new stdClass();
       foreach ($_REQUEST as $key => $val) $rquest->queryParams->$key = $val;
 
-      # maybe you forgot to register the route? let's try to blindly find the controller file...
-      if (is_file("$dir/controller.php") || is_file("$dir/index.php")){
+      # maybe you forgot to register the route? let's try to blindly find the module file...
+      if (is_file("$dir/module.php") || is_file("$dir/index.php")){
 
-        @include "$dir/controller.php";
+        @include "$dir/module.php";
         @include "$dir/index.php"; 
 
-        $processor = new api_module();
+        $processor = new api_module($this->config);
 
         $call = "_" . strtolower($_SERVER['REQUEST_METHOD']);
         if (is_callable(array($processor,$call))){
@@ -192,10 +193,10 @@ class API {
     # is the generic route option set?
     if ($this->config->generic_route){
 
-      # hmm....we couldn't find the controller...so let's try a generic one....
-      include $this->config->app_dir."/calls/generic/controller.php";
+      # hmm....we couldn't find the module...so let's try a generic one....
+      include $this->config->app_dir."/calls/_generic/module.php";
 
-      $processor = new api_module();
+      $processor = new api_module($this->config);
 
       $call = "_" . strtolower($_SERVER['REQUEST_METHOD']);
       if (is_callable(array($processor,$call))){
@@ -216,8 +217,6 @@ class API {
         $request = new stdClass();
         $request->pathParams = new stdClass();
         foreach ($pathvars as $key => $val) $request->pathParams->$key = $val;
-        $request->queryParams = new stdClass();
-        foreach ($_REQUEST as $key => $val) $rquest->queryParams->$key = $val;
 
         # call it...
         $res = $processor->$call($request);
@@ -293,19 +292,22 @@ class API {
     
     # intercept schema requests
     } elseif ($this->config->schema_route && strpos($this->path,"schema") === 0){
-      
       # require auth...
       $this->authorize();
 
-      # include the controller...
-      include "schema/controller.php";
+      # include the module...
+      include $dir = $this->config->app_dir."/calls/_schema/module.php";
       $route = explode("/",$this->path);
       $table = $route[1];
       $variables['table'] = $table;
 
+      $request = new stdClass();
+      $request->pathParams = new stdClass();
+      $request->pathParams->table = $table;
+
       # get that shcema data!
-      $processor = new api_module();
-      $processor->_get($variables);
+      $processor = new api_module($this->config);
+      $processor->_get($request);
       exit;
 
     } else {
@@ -329,6 +331,15 @@ class API {
 # api_super - helper functions
 ##########################################
 class api_super {
+
+  ################################
+  # contsrutor
+  ################################
+  function __construct($config){
+    $this->config = $config;
+    $this->libdir = $this->config->libdir;
+  }
+  ################################
 
 
   ################################

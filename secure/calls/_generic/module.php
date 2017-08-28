@@ -21,6 +21,7 @@ class api_module extends api_super {
       $this->respond($t->row);
     } else {
       $t = new dbo($table);
+      if (!$t) $this->error("Resource not found");
       $t->find();
 
       $res = [];

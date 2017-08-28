@@ -1,4 +1,8 @@
 #!/bin/bash
 CONTAINER_NAME="phpapi"
-docker run -p 3333:3306 -p 8888:80 --name="$(CONTAINER_NAME)" -e LOG_STDERR=true -e LOG_LEVEL=debug -v "$(pwd)"/src/api/public:/var/www/html -v "$(pwd)"/src/api/secure:/var/www/secure fauria/lamp
-docker exec "$(CONTAINER_NAME)" mysql -u root < /var/www/secure/database/create.sql
+docker stop "$CONTAINER_NAME"
+docker rm "$CONTAINER_NAME"
+docker run -dit -p 3333:3306 -p 8888:80 --name="$CONTAINER_NAME" -v "$(pwd)"/public:/var/www/html -v "$(pwd)"/secure:/var/www/secure phpapi
+docker exec -it "$CONTAINER_NAME" mkdir /var/www/secure/lib/keys
+docker exec -it "$CONTAINER_NAME" chown 33:33 /var/www/secure/lib/keys
+docker logs -f "$CONTAINER_NAME"

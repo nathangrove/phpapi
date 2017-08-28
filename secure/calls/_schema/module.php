@@ -3,16 +3,13 @@
 class api_module extends api_super {
 
 	function _get($request) {
-    
+
     $model_protections = json_decode(file_get_contents("$this->libdir/protected.models.json"));
 
-		# check for table...
-		if ($request->pathParams->table == '') return false;
-
-		$table = $request->pathParams->table;
+		$table = $request->pathParams->table ? $request->pathParams->table : false;
 
 		# special request for all available models
-		if ($table == 'available_models') {
+		if (!$table){#$table == 'available_models') {
 			$t = new dbo();
 			$t->query("show tables");
 
@@ -24,7 +21,6 @@ class api_module extends api_super {
 			}
 
 			$this->respond($ts);
-      exit;
     }
 
 

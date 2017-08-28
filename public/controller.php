@@ -29,7 +29,7 @@ $db_host      = "localhost";
 # route path => route controller
 ################################
 $routes = array(
-  #"/event/:id" => "event/controller.php",
+  "/event/:id" => "event/module.php",
 );
 ################################
 
@@ -39,6 +39,7 @@ $routes = array(
 # CONFIGURE PHP
 ################################
 ini_set("display_errors", 0);
+ini_set("short_open_tag", 'On');
 ################################
 
 
@@ -87,7 +88,8 @@ try {
 @$config->auto_route = $auto_route;
 @$config->generic_route = $generic_route;
 @$config->schema_route = $schema_route;
-@$config->libdir = __DIR__ . "/lib";
+@$config->libdir = "$secure_dir/lib";
+@$config->calldir = "$secure_dir/calls";
 
 $api = new API($config,$routes);
 $api->process();
